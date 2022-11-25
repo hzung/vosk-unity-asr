@@ -46,12 +46,13 @@
      <Compile Include="Assets/ThirdParty/Vosk/VoskRecognizer.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/VoskSpeechToText.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/VoskResultText.cs" />
+     <Compile Include="Assets/Example/Example.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/SpkModel.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/VoskPINVOKE.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/VoiceProcessor.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/Model.cs" />
-     <Compile Include="Assets/Example/Example.cs" />
      <None Include="Assets/ThirdParty/Zip/License.txt" />
+     <None Include="Assets/StreamingAssets/UnityServicesProjectConfiguration.json" />
      <Reference Include="UnityEngine">
      <HintPath>/Applications/Unity/Hub/Editor/2022.1.15f1/Unity.app/Contents/Managed/UnityEngine/UnityEngine.dll</HintPath>
      </Reference>
