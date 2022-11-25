@@ -1,7 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -15,7 +13,6 @@ public class Example : MonoBehaviour
     public VoskSpeechToText voskSpeechToText;
     private bool isReady = false;
     private string savedFilePath = string.Empty;
-    private List<string> results = new();
 
     private void OnEnable()
     {
@@ -45,9 +42,7 @@ public class Example : MonoBehaviour
 
     private void OnTranscriptionResult(string result)
     {
-        results.Add(result);
-        var totalResult = results.Aggregate(string.Empty, (current, r) => current + (r + "\n"));
-        txtResult.text = totalResult;
+        txtResult.text = result;
     }
 
     private void OnRecordSaved(string filePath)
