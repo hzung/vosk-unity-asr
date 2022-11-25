@@ -86,7 +86,6 @@ public class VoskRecognizer : System.IDisposable {
   public void Reset() {
     VoskPINVOKE.VoskRecognizer_Reset(handle);
   }
-
 }
 
 }

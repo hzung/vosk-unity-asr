@@ -13,7 +13,7 @@ using Vosk;
 public class VoskSpeechToText : MonoBehaviour
 {
 	[Tooltip("Location of the model, relative to the Streaming Assets folder.")]
-	public string ModelPath = "vosk-model-small-ru-0.22.zip";
+	public string ModelPath = "";
 
 	[Tooltip("The source of the microphone input.")]
 	public VoiceProcessor voiceProcessor;
@@ -37,7 +37,6 @@ public class VoskSpeechToText : MonoBehaviour
 	private VoskRecognizer _recognizer;
 
 	//Conditional flag to see if a recognizer has already been created.
-	//TODO: Allow for runtime changes to the recognizer.
 	private bool _recognizerReady;
 
 	//Holds all of the audio data until the user stops talking.
@@ -48,6 +47,8 @@ public class VoskSpeechToText : MonoBehaviour
 
 	//Called after the user is done speaking and vosk processes the audio.
 	public Action<string> OnTranscriptionResult;
+	public Action<string> OnRecordSaved;
+	public Action OnReady;
 
 	//The absolute path to the decompressed model folder.
 	private string _decompressedModelPath;
@@ -70,21 +71,24 @@ public class VoskSpeechToText : MonoBehaviour
 	private bool _running;
 
 	//Thread safe queue of microphone data.
-	private readonly ConcurrentQueue<short[]> _threadedBufferQueue = new ConcurrentQueue<short[]>();
-
+	private readonly ConcurrentQueue<short[]> _threadedBufferQueue = new();
 	//Thread safe queue of resuts
-	private readonly ConcurrentQueue<string> _threadedResultQueue = new ConcurrentQueue<string>();
+	private readonly ConcurrentQueue<string> _threadedResultQueue = new();
+	static readonly ProfilerMarker voskRecognizerCreateMarker = new("VoskRecognizer.Create");
+	static readonly ProfilerMarker voskRecognizerReadMarker = new("VoskRecognizer.AcceptWaveform");
 
-	static readonly ProfilerMarker voskRecognizerCreateMarker = new ProfilerMarker("VoskRecognizer.Create");
-	static readonly ProfilerMarker voskRecognizerReadMarker = new ProfilerMarker("VoskRecognizer.AcceptWaveform");
-
-	//If Auto start is enabled, starts vosk speech to text.
-	void Start()
+	private void OnEnable()
 	{
-		if (AutoStart)
-		{
-			StartVoskStt();
-		}
+		voiceProcessor.OnFrameCaptured += VoiceProcessorOnOnFrameCaptured;
+		voiceProcessor.OnRecordingStop += VoiceProcessorOnOnRecordingStop;
+		voiceProcessor.OnRecordSaved += OnRecordSavedCallBack;
+	}
+
+	private void OnDisable()
+	{
+		voiceProcessor.OnFrameCaptured -= VoiceProcessorOnOnFrameCaptured;
+		voiceProcessor.OnRecordingStop -= VoiceProcessorOnOnRecordingStop;
+		voiceProcessor.OnRecordSaved -= OnRecordSavedCallBack;
 	}
 
 	/// <summary>
@@ -94,7 +98,7 @@ public class VoskSpeechToText : MonoBehaviour
 	/// <param name="modelPath">The path to the model folder relative to StreamingAssets. If the path has a .zip ending, it will be decompressed into the application data persistent folder.</param>
 	/// <param name="startMicrophone">"Should the microphone after vosk initializes?</param>
 	/// <param name="maxAlternatives">The maximum number of alternative phrases detected</param>
-	public void StartVoskStt(List<string> keyPhrases = null, string modelPath = default, bool startMicrophone = true, int maxAlternatives = 3)
+	public void Init(List<string> keyPhrases = null, string modelPath = default, int maxAlternatives = 3)
 	{
 		if (_isInitializing)
 		{
@@ -118,32 +122,40 @@ public class VoskSpeechToText : MonoBehaviour
 		}
 
 		MaxAlternatives = maxAlternatives;
-		StartCoroutine(DoStartVoskStt(startMicrophone));
+		StartCoroutine(DoStartVoskStt());
 	}
 
 	//Decompress model, load settings, start Vosk and optionally start the microphone
-	private IEnumerator DoStartVoskStt(bool startMicrophone)
+	private IEnumerator DoStartVoskStt()
 	{
 		_isInitializing = true;
 		yield return Decompress();
 		OnStatusUpdated?.Invoke("Loading Model from: " + _decompressedModelPath);
 		_model = new Model(_decompressedModelPath);
-		yield return null;
 		OnStatusUpdated?.Invoke("Initialized");
-		voiceProcessor.OnFrameCaptured += VoiceProcessorOnOnFrameCaptured;
-		voiceProcessor.OnRecordingStop += VoiceProcessorOnOnRecordingStop;
 		_isInitializing = false;
 		_didInit = true;
-		
 		_running = true;
 		Task.Run(ThreadedWork).ConfigureAwait(false);
-		if (startMicrophone)
-		{
-			voiceProcessor.StartRecording();
-		}
+		OnReady?.Invoke();
 	}
 
-	//Translates the KeyPhraseses into a json array and appends the `[unk]` keyword at the end to tell vosk to filter other phrases.
+	private void OnRecordSavedCallBack(string filePath)
+	{
+		OnRecordSaved?.Invoke(filePath);
+	}
+
+	public void StartRecording()
+	{
+		voiceProcessor.StartRecording();
+	}
+
+	public void StopRecording()
+	{
+		voiceProcessor.StopRecording();
+	}
+
+	// Translates the KeyPhraseses into a json array and appends the `[unk]` keyword at the end to tell vosk to filter other phrases.
 	private void UpdateGrammar()
 	{
 		if (KeyPhrases.Count == 0)

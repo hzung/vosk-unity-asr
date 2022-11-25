@@ -41,16 +41,16 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-     <Compile Include="Assets/Scripts/SavWav.cs" />
-     <Compile Include="Assets/Scripts/RecognitionResult.cs" />
+     <Compile Include="Assets/ThirdParty/Vosk/RecognitionResult.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/Vosk.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/VoskRecognizer.cs" />
-     <Compile Include="Assets/Scripts/VoskSpeechToText.cs" />
-     <Compile Include="Assets/Scripts/VoskResultText.cs" />
+     <Compile Include="Assets/ThirdParty/Vosk/VoskSpeechToText.cs" />
+     <Compile Include="Assets/ThirdParty/Vosk/VoskResultText.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/SpkModel.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/VoskPINVOKE.cs" />
-     <Compile Include="Assets/Scripts/VoiceProcessor.cs" />
+     <Compile Include="Assets/ThirdParty/Vosk/VoiceProcessor.cs" />
      <Compile Include="Assets/ThirdParty/Vosk/Model.cs" />
+     <Compile Include="Assets/Example/Example.cs" />
      <None Include="Assets/ThirdParty/Zip/License.txt" />
      <Reference Include="UnityEngine">
      <HintPath>/Applications/Unity/Hub/Editor/2022.1.15f1/PlaybackEngines/AndroidPlayer/Variations/mono/Managed/UnityEngine.dll</HintPath>

@@ -53,12 +53,14 @@ public class VoiceProcessor : MonoBehaviour
     const int HEADER_SIZE = 44;
     
     [SerializeField] private int MicrophoneIndex;
-
+    public int recordDuration = 60;
+    
     /// <summary>
     /// Sample rate of recorded audio
     /// </summary>
     public int SampleRate { get; private set; }
 
+    
     /// <summary>
     /// Size of audio frames that are delivered
     /// </summary>
@@ -122,6 +124,7 @@ public class VoiceProcessor : MonoBehaviour
 
     AudioClip _audioClip;
     private event Action RestartRecording;
+    public event Action<string> OnRecordSaved;
 
     void Awake()
     {
@@ -216,7 +219,7 @@ public class VoiceProcessor : MonoBehaviour
 
         SampleRate = sampleRate;
         FrameLength = frameSize;
-        _audioClip = Microphone.Start(CurrentDeviceName, true, 60, sampleRate);
+        _audioClip = Microphone.Start(CurrentDeviceName, true, recordDuration, sampleRate);
         StartCoroutine(RecordData());
     }
 
@@ -338,6 +341,7 @@ public class VoiceProcessor : MonoBehaviour
         {
             samplesData = new float[_audioClip.samples * _audioClip.channels];
             _audioClip.GetData(samplesData, 0);
+            
             // Trim the silence at the end of the recording
             var samples = samplesData.ToList();
             samplesData = samples.ToArray();
@@ -357,6 +361,7 @@ public class VoiceProcessor : MonoBehaviour
             {
                 WriteWavFile(audioClip, filePath);
                 Debug.Log("File Saved Successfully at " + filePath);
+                OnRecordSaved?.Invoke(filePath);
             }
             catch (DirectoryNotFoundException)
             {
@@ -429,7 +434,6 @@ public class VoiceProcessor : MonoBehaviour
             clip.GetData(clipData, 0);
             var intData = new short[clipData.Length];
             var bytesData = new byte[clipData.Length * 2];
-
             int convertionFactor = 32767;
 
             for (var i = 0; i < clipData.Length; i++)
