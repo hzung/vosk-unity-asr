@@ -1,6 +1,9 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class Example : MonoBehaviour
@@ -58,6 +61,7 @@ public class Example : MonoBehaviour
         {
             return;
         }
+
         if (voskSpeechToText.voiceProcessor.IsRecording)
         {
             voskSpeechToText.StopRecording();
@@ -73,5 +77,31 @@ public class Example : MonoBehaviour
     public void PlaySavedAudio()
     {
         Debug.Log($"Play: {savedFilePath}");
+        StartCoroutine(LoadFile(savedFilePath, audioClip =>
+        {
+            audioSource.PlayOneShot(audioClip);
+        }, () =>
+        {
+            Debug.Log("Play audio fail");
+        }));
+    }
+
+    private IEnumerator LoadFile(string path, Action<AudioClip> done, Action fail = null)
+    {
+        if (!System.IO.File.Exists(path))
+        {
+            yield break;
+        }
+        using var www = UnityWebRequestMultimedia.GetAudioClip("file://" + path, AudioType.WAV);
+        yield return www.SendWebRequest();
+        if (www.isDone)
+        {
+            var temp = DownloadHandlerAudioClip.GetContent(www);
+            done?.Invoke(temp);
+        }
+        else
+        {
+            fail?.Invoke();
+        }
     }
 }
