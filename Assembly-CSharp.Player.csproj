@@ -52,7 +52,6 @@
      <Compile Include="Assets/ThirdParty/Vosk/Model.cs" />
      <Compile Include="Assets/Scripts/SavWav.cs" />
      <None Include="Assets/ThirdParty/Zip/License.txt" />
-     <None Include="Assets/StreamingAssets/UnityServicesProjectConfiguration.json" />
      <Reference Include="UnityEngine">
      <HintPath>/Applications/Unity/Hub/Editor/2022.1.15f1/PlaybackEngines/AndroidPlayer/Variations/mono/Managed/UnityEngine.dll</HintPath>
      </Reference>

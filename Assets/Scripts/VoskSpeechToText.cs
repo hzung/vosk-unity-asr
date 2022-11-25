@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Ionic.Zip;
 using Unity.Profiling;
@@ -126,28 +125,18 @@ public class VoskSpeechToText : MonoBehaviour
 	private IEnumerator DoStartVoskStt(bool startMicrophone)
 	{
 		_isInitializing = true;
-		yield return WaitForMicrophoneInput();
-
 		yield return Decompress();
-
 		OnStatusUpdated?.Invoke("Loading Model from: " + _decompressedModelPath);
-		//Vosk.Vosk.SetLogLevel(0);
 		_model = new Model(_decompressedModelPath);
-
 		yield return null;
-
 		OnStatusUpdated?.Invoke("Initialized");
 		VoiceProcessor.OnFrameCaptured += VoiceProcessorOnOnFrameCaptured;
 		VoiceProcessor.OnRecordingStop += VoiceProcessorOnOnRecordingStop;
-
-		if (startMicrophone)
-		{
-			VoiceProcessor.StartRecording();
-		}
 		_isInitializing = false;
 		_didInit = true;
-
-		ToggleRecording();
+		
+		_running = true;
+		Task.Run(ThreadedWork).ConfigureAwait(false);
 	}
 
 	//Translates the KeyPhraseses into a json array and appends the `[unk]` keyword at the end to tell vosk to filter other phrases.
@@ -158,8 +147,7 @@ public class VoskSpeechToText : MonoBehaviour
 			_grammar = "";
 			return;
 		}
-
-		JSONArray keywords = new JSONArray();
+		var keywords = new JSONArray();
 		foreach (string keyphrase in KeyPhrases)
 		{
 			keywords.Add(new JSONString(keyphrase.ToLower()));
@@ -244,32 +232,6 @@ public class VoskSpeechToText : MonoBehaviour
 		}
 	}
 
-	//Wait until microphones are initialized
-	private IEnumerator WaitForMicrophoneInput()
-	{
-		while (Microphone.devices.Length <= 0)
-			yield return null;
-	}
-
-	//Can be called from a script or a GUI button to start detection.
-	public void ToggleRecording()
-	{
-		Debug.Log("Toogle Recording");
-		if (!VoiceProcessor.IsRecording)
-		{
-			Debug.Log("Start Recording");
-			_running = true;
-			VoiceProcessor.StartRecording();
-			Task.Run(ThreadedWork).ConfigureAwait(false);
-		}
-		else
-		{
-			Debug.Log("Stop Recording");
-			_running = false;
-			VoiceProcessor.StopRecording();
-		}
-	}
-
 	//Calls the On Phrase Recognized event on the Unity Thread
 	void Update()
 	{
@@ -298,7 +260,6 @@ public class VoskSpeechToText : MonoBehaviour
 		if (!_recognizerReady)
 		{
 			UpdateGrammar();
-
 			//Only detect defined keywords if they are specified.
 			if (string.IsNullOrEmpty(_grammar))
 			{
@@ -311,7 +272,6 @@ public class VoskSpeechToText : MonoBehaviour
 			_recognizer.SetMaxAlternatives(MaxAlternatives);
 			//_recognizer.SetWords(true);
 			_recognizerReady = true;
-
 			Debug.Log("Recognizer ready");
 		}
 		voskRecognizerCreateMarker.End();
@@ -334,5 +294,12 @@ public class VoskSpeechToText : MonoBehaviour
 			}
 		}
 		voskRecognizerReadMarker.End();
+	}
+
+	public void SttFromFile(AudioClip audioClip)
+	{
+		// Process audio
+		
+		// Push to the queue
 	}
 }
