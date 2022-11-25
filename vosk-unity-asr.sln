@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{bd5fef83-c774-2570-1dc0-7340593ac5c9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bunny83.simpleJson", "Bunny83.simpleJson.csproj", "{1d800490-3211-c647-21ba-1198225b405f}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.Player.csproj", "{b1c36f7e-4818-987f-6685-b1cd22fb464d}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bunny83.simpleJson", "Bunny83.simpleJson.Player.csproj", "{9a82c41f-3f69-5ccb-ba00-4396616a7968}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{bd5fef83-c774-2570-1dc0-7340593ac5c9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{bd5fef83-c774-2570-1dc0-7340593ac5c9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1d800490-3211-c647-21ba-1198225b405f}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1d800490-3211-c647-21ba-1198225b405f}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{b1c36f7e-4818-987f-6685-b1cd22fb464d}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{b1c36f7e-4818-987f-6685-b1cd22fb464d}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9a82c41f-3f69-5ccb-ba00-4396616a7968}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9a82c41f-3f69-5ccb-ba00-4396616a7968}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

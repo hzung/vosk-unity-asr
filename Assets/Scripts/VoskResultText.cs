@@ -13,17 +13,17 @@ public class VoskResultText : MonoBehaviour
 
     private void OnTranscriptionResult(string obj)
     {
-        Debug.Log(obj);
         var result = new RecognitionResult(obj);
-        for (int i = 0; i < result.Phrases.Length; i++)
+        var resultTxt = string.Empty;
+        var highestConfident = float.MinValue;
+        foreach (var resultPhrase in result.Phrases)
         {
-            if (i > 0)
+            if (resultPhrase.Confidence > highestConfident)
             {
-                ResultText.text += ", ";
+                highestConfident = resultPhrase.Confidence;
+                resultTxt = resultPhrase.Text;
             }
-
-            ResultText.text += result.Phrases[i].Text;
         }
-    	ResultText.text += "\n";
+        ResultText.text = resultTxt;
     }
 }
