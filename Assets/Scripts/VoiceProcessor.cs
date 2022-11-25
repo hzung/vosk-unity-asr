@@ -38,10 +38,7 @@ public class VoiceProcessor : MonoBehaviour
     /// <summary>
     /// Indicates whether microphone is capturing or not
     /// </summary>
-    public bool IsRecording
-    {
-        get { return _audioClip != null && Microphone.IsRecording(CurrentDeviceName); }
-    }
+    public bool IsRecording => _audioClip != null && Microphone.IsRecording(CurrentDeviceName);
 
     [SerializeField] private int MicrophoneIndex;
 
@@ -88,7 +85,9 @@ public class VoiceProcessor : MonoBehaviour
         get
         {
             if (CurrentDeviceIndex < 0 || CurrentDeviceIndex >= Microphone.devices.Length)
+            {
                 return string.Empty;
+            }
             return Devices[CurrentDeviceIndex];
         }
     }
@@ -206,9 +205,7 @@ public class VoiceProcessor : MonoBehaviour
 
         SampleRate = sampleRate;
         FrameLength = frameSize;
-
         _audioClip = Microphone.Start(CurrentDeviceName, true, 1, sampleRate);
-
         StartCoroutine(RecordData());
     }
 
@@ -218,14 +215,20 @@ public class VoiceProcessor : MonoBehaviour
     public void StopRecording()
     {
         if (!IsRecording)
+        {
             return;
+        }
 
         Microphone.End(CurrentDeviceName);
         Destroy(_audioClip);
         _audioClip = null;
         _didDetect = false;
-
         StopCoroutine(RecordData());
+    }
+
+    public void SaveWav()
+    {
+        SavWav.Save("output", _audioClip);
     }
 
     /// <summary>

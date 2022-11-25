@@ -13,6 +13,7 @@ public class VoskResultText : MonoBehaviour
 
     private void OnTranscriptionResult(string obj)
     {
+        Debug.Log(obj);
         var result = new RecognitionResult(obj);
         var resultTxt = string.Empty;
         var highestConfident = float.MinValue;

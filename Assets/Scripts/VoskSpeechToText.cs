@@ -9,7 +9,6 @@ using Ionic.Zip;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 using Vosk;
 
 public class VoskSpeechToText : MonoBehaviour
@@ -77,8 +76,6 @@ public class VoskSpeechToText : MonoBehaviour
 	//Thread safe queue of resuts
 	private readonly ConcurrentQueue<string> _threadedResultQueue = new ConcurrentQueue<string>();
 
-
-
 	static readonly ProfilerMarker voskRecognizerCreateMarker = new ProfilerMarker("VoskRecognizer.Create");
 	static readonly ProfilerMarker voskRecognizerReadMarker = new ProfilerMarker("VoskRecognizer.AcceptWaveform");
 
@@ -144,8 +141,9 @@ public class VoskSpeechToText : MonoBehaviour
 		VoiceProcessor.OnRecordingStop += VoiceProcessorOnOnRecordingStop;
 
 		if (startMicrophone)
+		{
 			VoiceProcessor.StartRecording();
-
+		}
 		_isInitializing = false;
 		_didInit = true;
 
@@ -262,7 +260,7 @@ public class VoskSpeechToText : MonoBehaviour
 			Debug.Log("Start Recording");
 			_running = true;
 			VoiceProcessor.StartRecording();
-    	                Task.Run(ThreadedWork).ConfigureAwait(false);
+			Task.Run(ThreadedWork).ConfigureAwait(false);
 		}
 		else
 		{
@@ -284,13 +282,13 @@ public class VoskSpeechToText : MonoBehaviour
 	//Callback from the voice processor when new audio is detected
 	private void VoiceProcessorOnOnFrameCaptured(short[] samples)
 	{	
-                _threadedBufferQueue.Enqueue(samples);
+        _threadedBufferQueue.Enqueue(samples);
 	}
 
 	//Callback from the voice processor when recording stops
 	private void VoiceProcessorOnOnRecordingStop()
 	{
-                Debug.Log("Stopped");
+        Debug.Log("Stopped");
 	}
 
 	//Feeds the autio logic into the vosk recorgnizer
@@ -310,16 +308,13 @@ public class VoskSpeechToText : MonoBehaviour
 			{
 				_recognizer = new VoskRecognizer(_model, 16000.0f, _grammar);
 			}
-
 			_recognizer.SetMaxAlternatives(MaxAlternatives);
 			//_recognizer.SetWords(true);
 			_recognizerReady = true;
 
 			Debug.Log("Recognizer ready");
 		}
-
 		voskRecognizerCreateMarker.End();
-
 		voskRecognizerReadMarker.Begin();
 
 		while (_running)
@@ -338,10 +333,6 @@ public class VoskSpeechToText : MonoBehaviour
 				await Task.Delay(100);
 			}
 		}
-
 		voskRecognizerReadMarker.End();
 	}
-
-
-
 }
