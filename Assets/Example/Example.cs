@@ -10,11 +10,12 @@ public class Example : MonoBehaviour
 {
     public Text txtResult;
     public Text txtButtonRecording;
+    public Button btnPlay;
     public AudioSource audioSource;
     public VoskSpeechToText voskSpeechToText;
     private bool isReady = false;
     private string savedFilePath = string.Empty;
-    private List<string> results = new List<string>();
+    private List<string> results = new();
 
     private void OnEnable()
     {
@@ -53,6 +54,7 @@ public class Example : MonoBehaviour
     {
         Debug.Log("Saved: " + filePath);
         savedFilePath = filePath;
+        btnPlay.gameObject.SetActive(true);
     }
 
     public void Trigger()
@@ -61,7 +63,6 @@ public class Example : MonoBehaviour
         {
             return;
         }
-
         if (voskSpeechToText.voiceProcessor.IsRecording)
         {
             voskSpeechToText.StopRecording();
@@ -69,6 +70,7 @@ public class Example : MonoBehaviour
         }
         else
         {
+            btnPlay.gameObject.SetActive(false);
             txtButtonRecording.text = "Stop";
             voskSpeechToText.StartRecording();
         }
