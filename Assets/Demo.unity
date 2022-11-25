@@ -913,6 +913,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   txtResult: {fileID: 1973224739}
   txtButtonRecording: {fileID: 1908976514}
+  btnPlay: {fileID: 0}
   audioSource: {fileID: 1880598648}
   voskSpeechToText: {fileID: 2056438109}
 --- !u!82 &1880598648
