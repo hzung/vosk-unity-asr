@@ -16,8 +16,8 @@ public class VoskSpeechToText : MonoBehaviour
 	public string ModelPath = "vosk-model-small-ru-0.22.zip";
 
 	[Tooltip("The source of the microphone input.")]
-
-	public VoiceProcessor VoiceProcessor;
+	public VoiceProcessor voiceProcessor;
+	
 	[Tooltip("The Max number of alternatives that will be processed.")]
 	public int MaxAlternatives = 3;
 
@@ -94,7 +94,7 @@ public class VoskSpeechToText : MonoBehaviour
 	/// <param name="modelPath">The path to the model folder relative to StreamingAssets. If the path has a .zip ending, it will be decompressed into the application data persistent folder.</param>
 	/// <param name="startMicrophone">"Should the microphone after vosk initializes?</param>
 	/// <param name="maxAlternatives">The maximum number of alternative phrases detected</param>
-	public void StartVoskStt(List<string> keyPhrases = null, string modelPath = default, bool startMicrophone = false, int maxAlternatives = 3)
+	public void StartVoskStt(List<string> keyPhrases = null, string modelPath = default, bool startMicrophone = true, int maxAlternatives = 3)
 	{
 		if (_isInitializing)
 		{
@@ -130,13 +130,17 @@ public class VoskSpeechToText : MonoBehaviour
 		_model = new Model(_decompressedModelPath);
 		yield return null;
 		OnStatusUpdated?.Invoke("Initialized");
-		VoiceProcessor.OnFrameCaptured += VoiceProcessorOnOnFrameCaptured;
-		VoiceProcessor.OnRecordingStop += VoiceProcessorOnOnRecordingStop;
+		voiceProcessor.OnFrameCaptured += VoiceProcessorOnOnFrameCaptured;
+		voiceProcessor.OnRecordingStop += VoiceProcessorOnOnRecordingStop;
 		_isInitializing = false;
 		_didInit = true;
 		
 		_running = true;
 		Task.Run(ThreadedWork).ConfigureAwait(false);
+		if (startMicrophone)
+		{
+			voiceProcessor.StartRecording();
+		}
 	}
 
 	//Translates the KeyPhraseses into a json array and appends the `[unk]` keyword at the end to tell vosk to filter other phrases.
@@ -161,65 +165,62 @@ public class VoskSpeechToText : MonoBehaviour
 	//Decompress the model zip file or return the location of the decompressed files.
 	private IEnumerator Decompress()
 	{
-		if (!Path.HasExtension(ModelPath)
-			|| Directory.Exists(
-				Path.Combine(Application.persistentDataPath, Path.GetFileNameWithoutExtension(ModelPath))))
+		if (!Path.HasExtension(ModelPath) || Directory.Exists(Path.Combine(Application.persistentDataPath, Path.GetFileNameWithoutExtension(ModelPath))))
 		{
 			OnStatusUpdated?.Invoke("Using existing decompressed model.");
-			_decompressedModelPath =
-				Path.Combine(Application.persistentDataPath, Path.GetFileNameWithoutExtension(ModelPath));
+			_decompressedModelPath = Path.Combine(Application.persistentDataPath, Path.GetFileNameWithoutExtension(ModelPath) ?? string.Empty);
 			Debug.Log(_decompressedModelPath);
-
 			yield break;
 		}
 
 		OnStatusUpdated?.Invoke("Decompressing model...");
-		string dataPath = Path.Combine(Application.streamingAssetsPath, ModelPath);
-
-		Stream dataStream;
-		// Read data from the streaming assets path. You cannot access the streaming assets directly on Android.
-		if (dataPath.Contains("://"))
+		if (ModelPath != null)
 		{
-			UnityWebRequest www = UnityWebRequest.Get(dataPath);
-			www.SendWebRequest();
-			while (!www.isDone)
+			string dataPath = Path.Combine(Application.streamingAssetsPath, ModelPath);
+
+			Stream dataStream;
+			// Read data from the streaming assets path. You cannot access the streaming assets directly on Android.
+			if (dataPath.Contains("://"))
+			{
+				UnityWebRequest www = UnityWebRequest.Get(dataPath);
+				www.SendWebRequest();
+				while (!www.isDone)
+				{
+					yield return null;
+				}
+				dataStream = new MemoryStream(www.downloadHandler.data);
+			}
+			// Read the file directly on valid platforms.
+			else
+			{
+				dataStream = File.OpenRead(dataPath);
+			}
+
+			//Read the Zip File
+			var zipFile = ZipFile.Read(dataStream);
+
+			//Listen for the zip file to complete extraction
+			zipFile.ExtractProgress += ZipFileOnExtractProgress;
+
+			//Update status text
+			OnStatusUpdated?.Invoke("Reading Zip file");
+
+			//Start Extraction
+			zipFile.ExtractAll(Application.persistentDataPath);
+
+			//Wait until it's complete
+			while (_isDecompressing == false)
 			{
 				yield return null;
 			}
-			dataStream = new MemoryStream(www.downloadHandler.data);
+			//Override path given in ZipFileOnExtractProgress to prevent crash
+			_decompressedModelPath = Path.Combine(Application.persistentDataPath, Path.GetFileNameWithoutExtension(ModelPath));
+			//Update status text
+			OnStatusUpdated?.Invoke("Decompressing complete!");
+			
+			//Dispose the zipfile reader.
+			zipFile.Dispose();
 		}
-		// Read the file directly on valid platforms.
-		else
-		{
-			dataStream = File.OpenRead(dataPath);
-		}
-
-		//Read the Zip File
-		var zipFile = ZipFile.Read(dataStream);
-
-		//Listen for the zip file to complete extraction
-		zipFile.ExtractProgress += ZipFileOnExtractProgress;
-
-		//Update status text
-		OnStatusUpdated?.Invoke("Reading Zip file");
-
-		//Start Extraction
-		zipFile.ExtractAll(Application.persistentDataPath);
-
-		//Wait until it's complete
-		while (_isDecompressing == false)
-		{
-			yield return null;
-		}
-		//Override path given in ZipFileOnExtractProgress to prevent crash
-		_decompressedModelPath = Path.Combine(Application.persistentDataPath, Path.GetFileNameWithoutExtension(ModelPath));
-
-		//Update status text
-		OnStatusUpdated?.Invoke("Decompressing complete!");
-		//Wait a second in case we need to initialize another object.
-		yield return new WaitForSeconds(1);
-		//Dispose the zipfile reader.
-		zipFile.Dispose();
 	}
 
 	///The function that is called when the zip file extraction process is updated.
@@ -272,7 +273,6 @@ public class VoskSpeechToText : MonoBehaviour
 			_recognizer.SetMaxAlternatives(MaxAlternatives);
 			//_recognizer.SetWords(true);
 			_recognizerReady = true;
-			Debug.Log("Recognizer ready");
 		}
 		voskRecognizerCreateMarker.End();
 		voskRecognizerReadMarker.Begin();
@@ -289,17 +289,9 @@ public class VoskSpeechToText : MonoBehaviour
 			}
 			else
 			{
-				// Wait for some data
 				await Task.Delay(100);
 			}
 		}
 		voskRecognizerReadMarker.End();
-	}
-
-	public void SttFromFile(AudioClip audioClip)
-	{
-		// Process audio
-		
-		// Push to the queue
 	}
 }

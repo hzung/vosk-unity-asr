@@ -27,7 +27,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 
@@ -41,6 +43,15 @@ public class VoiceProcessor : MonoBehaviour
     /// </summary>
     public bool IsRecording => _audioClip != null && Microphone.IsRecording(CurrentDeviceName);
 
+    /// <summary>
+    /// The samples are floats ranging from -1.0f to 1.0f, representing the data in the audio clip
+    /// </summary>
+    static float[] samplesData;
+    /// <summary>
+    /// WAV file header size
+    /// </summary>
+    const int HEADER_SIZE = 44;
+    
     [SerializeField] private int MicrophoneIndex;
 
     /// <summary>
@@ -116,6 +127,7 @@ public class VoiceProcessor : MonoBehaviour
     {
         UpdateDevices();
     }
+
 #if UNITY_EDITOR
     void Update()
     {
@@ -190,7 +202,6 @@ public class VoiceProcessor : MonoBehaviour
 
         if (IsRecording)
         {
-            // if sample rate or frame size have changed, restart recording
             if (sampleRate != SampleRate || frameSize != FrameLength)
             {
                 RestartRecording += () =>
@@ -200,13 +211,12 @@ public class VoiceProcessor : MonoBehaviour
                 };
                 StopRecording();
             }
-
             return;
         }
 
         SampleRate = sampleRate;
         FrameLength = frameSize;
-        _audioClip = Microphone.Start(CurrentDeviceName, true, 1, sampleRate);
+        _audioClip = Microphone.Start(CurrentDeviceName, true, 60, sampleRate);
         StartCoroutine(RecordData());
     }
 
@@ -219,6 +229,8 @@ public class VoiceProcessor : MonoBehaviour
         {
             return;
         }
+        SaveRecording();
+        
         Microphone.End(CurrentDeviceName);
         Destroy(_audioClip);
         _audioClip = null;
@@ -270,6 +282,7 @@ public class VoiceProcessor : MonoBehaviour
                 _audioClip.GetData(sampleBuffer, startReadPos);
             }
             startReadPos = endReadPos % _audioClip.samples;
+            
             if (_autoDetect == false)
             {
                 _transmit =_audioDetected = true;
@@ -319,4 +332,115 @@ public class VoiceProcessor : MonoBehaviour
         OnRecordingStop?.Invoke();
         RestartRecording?.Invoke();
     }
+    
+    #region Recorder Functions
+    public void SaveRecording(string fileName = "Audio")
+        {
+            samplesData = new float[_audioClip.samples * _audioClip.channels];
+            _audioClip.GetData(samplesData, 0);
+            // Trim the silence at the end of the recording
+            var samples = samplesData.ToList();
+            samplesData = samples.ToArray();
+                
+            // Create the audio file after removing the silence
+            var audioClip = AudioClip.Create(fileName, samplesData.Length, _audioClip.channels, 16000, false);
+            audioClip.SetData(samplesData, 0);
+            // Assign Current Audio Clip to Audio Player
+            var filePath = Path.Combine(Application.persistentDataPath, fileName + "_" + DateTime.UtcNow.ToString("yyyy_MM_dd_HH_mm_ss_ffff") + ".wav");
+            
+            // Delete the file if it exists.
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+            try
+            {
+                WriteWavFile(audioClip, filePath);
+                Debug.Log("File Saved Successfully at " + filePath);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                Debug.LogError("Persistent Data Path not found!");
+            }
+        }
+
+        // WAV file format from http://soundfile.sapp.org/doc/WaveFormat/
+        static void WriteWavFile(AudioClip clip, string filePath)
+        {
+            var clipData = new float[clip.samples];
+
+            //Create the file.
+            using Stream fs = File.Create(filePath);
+            var frequency = clip.frequency;
+            var numOfChannels = clip.channels;
+            var samples = clip.samples;
+            fs.Seek(0, SeekOrigin.Begin);
+            //Header
+            // Chunk ID
+            var riff = Encoding.ASCII.GetBytes("RIFF");
+            fs.Write(riff, 0, 4);
+            // ChunkSize
+            var chunkSize = BitConverter.GetBytes((HEADER_SIZE + clipData.Length) - 8);
+            fs.Write(chunkSize, 0, 4);
+            // Format
+            var wave = Encoding.ASCII.GetBytes("WAVE");
+            fs.Write(wave, 0, 4);
+            // Subchunk1ID
+            var fmt = Encoding.ASCII.GetBytes("fmt ");
+            fs.Write(fmt, 0, 4);
+            // Subchunk1Size
+            var subChunk1 = BitConverter.GetBytes(16);
+            fs.Write(subChunk1, 0, 4);
+
+            // AudioFormat
+            var audioFormat = BitConverter.GetBytes(1);
+            fs.Write(audioFormat, 0, 2);
+
+            // NumChannels
+            var numChannels = BitConverter.GetBytes(numOfChannels);
+            fs.Write(numChannels, 0, 2);
+
+            // SampleRate
+            var sampleRate = BitConverter.GetBytes(frequency);
+            fs.Write(sampleRate, 0, 4);
+
+            // ByteRate
+            var byteRate = BitConverter.GetBytes(frequency * numOfChannels * 2); // sampleRate * bytesPerSample*number of channels, here 44100*2*2
+            fs.Write(byteRate, 0, 4);
+
+            // BlockAlign
+            ushort blockAlign = (ushort)(numOfChannels * 2);
+            fs.Write(BitConverter.GetBytes(blockAlign), 0, 2);
+
+            // BitsPerSample
+            ushort bps = 16;
+            var bitsPerSample = BitConverter.GetBytes(bps);
+            fs.Write(bitsPerSample, 0, 2);
+
+            // Subchunk2ID
+            var datastring = Encoding.ASCII.GetBytes("data");
+            fs.Write(datastring, 0, 4);
+
+            // Subchunk2Size
+            var subChunk2 = BitConverter.GetBytes(samples * numOfChannels * 2);
+            fs.Write(subChunk2, 0, 4);
+
+            // Data
+            clip.GetData(clipData, 0);
+            var intData = new short[clipData.Length];
+            var bytesData = new byte[clipData.Length * 2];
+
+            int convertionFactor = 32767;
+
+            for (var i = 0; i < clipData.Length; i++)
+            {
+                intData[i] = (short)(clipData[i] * convertionFactor);
+                var byteArr = new byte[2];
+                byteArr = BitConverter.GetBytes(intData[i]);
+                byteArr.CopyTo(bytesData, i * 2);
+            }
+            fs.Write(bytesData, 0, bytesData.Length);
+        }
+
+        #endregion
 }

@@ -253,8 +253,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 400, y: 600}
+  m_AnchoredPosition: {x: 0, y: -0.0000020266}
+  m_SizeDelta: {x: 254.3264, y: 332.0156}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &862585975
 MonoBehaviour:
@@ -482,7 +482,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 86}
+  m_AnchoredPosition: {x: -1.2, y: 86}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1797346694
@@ -529,14 +529,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1880598647}
-        m_TargetAssemblyTypeName: VoskSpeechToText, Assembly-CSharp
-        m_MethodName: SttFromFile
-        m_Mode: 2
+      - m_Target: {fileID: 1880598648}
+        m_TargetAssemblyTypeName: VoiceProcessor, Assembly-CSharp
+        m_MethodName: StopRecording
+        m_Mode: 1
         m_Arguments:
-          m_ObjectArgument: {fileID: 8300000, guid: 896400d54f8b34eda8aa325b7ff6353d,
-            type: 3}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.AudioClip, UnityEngine
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -698,7 +697,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ModelPath: vosk-model-small-en-us-0.15.zip
-  VoiceProcessor: {fileID: 1880598648}
+  voiceProcessor: {fileID: 1880598648}
   MaxAlternatives: 3
   MaxRecordLength: 5
   AutoStart: 1
@@ -790,7 +789,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Save Wav
+  m_Text: Stop recording
 --- !u!222 &1908976515
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -833,10 +832,10 @@ RectTransform:
   m_Father: {fileID: 862585974}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 350, y: 550}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1973224738
 MonoBehaviour:
@@ -874,10 +873,10 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 14
+    m_FontSize: 22
     m_FontStyle: 0
     m_BestFit: 0
-    m_MinSize: 10
+    m_MinSize: 2
     m_MaxSize: 40
     m_Alignment: 0
     m_AlignByGeometry: 0

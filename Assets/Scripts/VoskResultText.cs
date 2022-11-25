@@ -25,6 +25,6 @@ public class VoskResultText : MonoBehaviour
                 resultTxt = resultPhrase.Text;
             }
         }
-        ResultText.text = resultTxt;
+        ResultText.text = $"[{resultTxt}]";
     }
 }
