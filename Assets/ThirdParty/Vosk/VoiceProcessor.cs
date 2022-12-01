@@ -303,7 +303,6 @@ public class VoiceProcessor : MonoBehaviour
                     }
                 }
             }
-            Debug.Log($"_audioDetected: {_audioDetected}");
             if (_audioDetected)
             {
                 _didDetect = true;
