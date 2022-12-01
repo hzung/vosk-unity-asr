@@ -123,6 +123,7 @@ public class VoiceProcessor : MonoBehaviour
 
 
     AudioClip _audioClip;
+    public bool markStopRecording = false;
     private event Action RestartRecording;
     public event Action<string> OnRecordSaved;
 
@@ -198,6 +199,7 @@ public class VoiceProcessor : MonoBehaviour
     /// <param name="autoDetect">Should the audio continuously record based on the volume</param>
     public void StartRecording(int sampleRate = 16000, int frameSize = 512, bool ?autoDetect = null)
     {
+        markStopRecording = false;
         if (autoDetect != null)
         {
             _autoDetect = (bool) autoDetect;
@@ -232,13 +234,7 @@ public class VoiceProcessor : MonoBehaviour
         {
             return;
         }
-        SaveRecording();
-        
-        Microphone.End(CurrentDeviceName);
-        Destroy(_audioClip);
-        _audioClip = null;
-        _didDetect = false;
-        StopCoroutine(RecordData());
+        markStopRecording = true;
     }
 
     /// <summary>
@@ -307,6 +303,7 @@ public class VoiceProcessor : MonoBehaviour
                     }
                 }
             }
+            Debug.Log($"_audioDetected: {_audioDetected}");
             if (_audioDetected)
             {
                 _didDetect = true;
@@ -329,6 +326,15 @@ public class VoiceProcessor : MonoBehaviour
                 }
                 OnRecordingStop?.Invoke();
                 _didDetect = false;
+            }
+            if (markStopRecording)
+            {
+                SaveRecording();
+                Microphone.End(CurrentDeviceName);
+                Destroy(_audioClip);
+                _audioClip = null;
+                _didDetect = false;
+                yield break;
             }
         }
 

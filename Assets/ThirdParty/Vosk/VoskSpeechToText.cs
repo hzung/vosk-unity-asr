@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Ionic.Zip;
 using Unity.Profiling;
@@ -256,7 +257,7 @@ public class VoskSpeechToText : MonoBehaviour
 
 	//Callback from the voice processor when new audio is detected
 	private void VoiceProcessorOnOnFrameCaptured(short[] samples)
-	{	
+	{
         _threadedBufferQueue.Enqueue(samples);
 	}
 
@@ -293,15 +294,17 @@ public class VoskSpeechToText : MonoBehaviour
 		{
 			if (_threadedBufferQueue.TryDequeue(out short[] voiceResult))
 			{
-				if (_recognizer.AcceptWaveform(voiceResult, voiceResult.Length))
-				{
-					var result = _recognizer.Result();
-					_threadedResultQueue.Enqueue(result);
-				}
+				_recognizer.AcceptWaveform(voiceResult, voiceResult.Length);
 			}
 			else
 			{
 				await Task.Delay(100);
+			}
+			if (voiceProcessor.markStopRecording)
+			{
+				var result = _recognizer.FinalResult();
+				_threadedResultQueue.Enqueue(result);
+				voiceProcessor.markStopRecording = false;
 			}
 		}
 		voskRecognizerReadMarker.End();
