@@ -326,8 +326,19 @@ public class VoiceProcessor : MonoBehaviour
                 OnRecordingStop?.Invoke();
                 _didDetect = false;
             }
+            
             if (markStopRecording)
             {
+                var pcmBuffer = new short[sampleBuffer.Length];
+                for (var i = 0; i < FrameLength; i++)
+                {
+                    pcmBuffer[i] = 0;
+                }
+                // Raise buffer event
+                if (OnFrameCaptured != null && _transmit)
+                {
+                    OnFrameCaptured.Invoke(pcmBuffer);
+                }
                 SaveRecording();
                 Microphone.End(CurrentDeviceName);
                 Destroy(_audioClip);
