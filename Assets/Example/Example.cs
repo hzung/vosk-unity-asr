@@ -19,6 +19,7 @@ public class Example : MonoBehaviour
         voskSpeechToText.OnReady += OnReady;
         voskSpeechToText.OnTranscriptionResult += OnTranscriptionResult;
         voskSpeechToText.OnRecordSaved += OnRecordSaved;
+        voskSpeechToText.OnDetectSpeaking += OnDetectSpeaking;
     }
 
     private void OnDisable()
@@ -26,12 +27,18 @@ public class Example : MonoBehaviour
         voskSpeechToText.OnReady -= OnReady;
         voskSpeechToText.OnTranscriptionResult -= OnTranscriptionResult;
         voskSpeechToText.OnRecordSaved -= OnRecordSaved;
+        voskSpeechToText.OnDetectSpeaking -= OnDetectSpeaking;
     }
 
     void Awake()
     {
         voskSpeechToText.Init();
         txtButtonRecording.text = "Start";
+    }
+
+    private void OnDetectSpeaking(bool isSpeaking)
+    {
+        Debug.Log("Is Speaking: " + isSpeaking);
     }
 
     private void OnReady()

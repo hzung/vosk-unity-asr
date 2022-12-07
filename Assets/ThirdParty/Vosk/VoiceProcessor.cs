@@ -71,6 +71,8 @@ public class VoiceProcessor : MonoBehaviour
     /// </summary>
     public event Action<short[]> OnFrameCaptured;
 
+    public event Action<bool> OnDetectSpeaking;
+    
     /// <summary>
     /// Event when audio capture thread stops
     /// </summary>
@@ -311,6 +313,8 @@ public class VoiceProcessor : MonoBehaviour
                 {
                     pcmBuffer[i] = (short) Math.Floor(sampleBuffer[i] * short.MaxValue);
                 }
+                var volume = CalcVolume(sampleBuffer, FrameLength);
+                OnDetectSpeaking?.Invoke(volume >= -40);
                 // Raise buffer event
                 if (OnFrameCaptured != null && _transmit)
                 {
@@ -350,6 +354,20 @@ public class VoiceProcessor : MonoBehaviour
 
         OnRecordingStop?.Invoke();
         RestartRecording?.Invoke();
+    }
+    
+    public float CalcVolume(float[] waveData, int window)
+    {
+        float levelMax = 0;
+        for (var i = 0; i < window; i++)
+        {
+            var wavePeak = waveData[i] * waveData[i];
+            if (levelMax < wavePeak)
+            {
+                levelMax = wavePeak;
+            }
+        }
+        return 20 * Mathf.Log10(Mathf.Abs(levelMax));
     }
     
     #region Recorder Functions

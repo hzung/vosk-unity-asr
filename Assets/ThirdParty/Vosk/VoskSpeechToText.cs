@@ -49,6 +49,7 @@ public class VoskSpeechToText : MonoBehaviour
 	//Called after the user is done speaking and vosk processes the audio.
 	public Action<string> OnTranscriptionResult;
 	public Action<string> OnRecordSaved;
+	public Action<bool> OnDetectSpeaking;
 	public Action OnReady;
 
 	//The absolute path to the decompressed model folder.
@@ -83,6 +84,7 @@ public class VoskSpeechToText : MonoBehaviour
 		voiceProcessor.OnFrameCaptured += VoiceProcessorOnOnFrameCaptured;
 		voiceProcessor.OnRecordingStop += VoiceProcessorOnOnRecordingStop;
 		voiceProcessor.OnRecordSaved += OnRecordSavedCallBack;
+		voiceProcessor.OnDetectSpeaking += OnDetectSpeakingCallBack;
 	}
 
 	private void OnDisable()
@@ -90,6 +92,12 @@ public class VoskSpeechToText : MonoBehaviour
 		voiceProcessor.OnFrameCaptured -= VoiceProcessorOnOnFrameCaptured;
 		voiceProcessor.OnRecordingStop -= VoiceProcessorOnOnRecordingStop;
 		voiceProcessor.OnRecordSaved -= OnRecordSavedCallBack;
+		voiceProcessor.OnDetectSpeaking -= OnDetectSpeakingCallBack;
+	}
+
+	private void OnDetectSpeakingCallBack(bool isSpeaking)
+	{
+		OnDetectSpeaking?.Invoke(isSpeaking);
 	}
 
 	/// <summary>
