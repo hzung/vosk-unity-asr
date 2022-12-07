@@ -294,7 +294,10 @@ public class VoskSpeechToText : MonoBehaviour
 		{
 			if (_threadedBufferQueue.TryDequeue(out short[] voiceResult))
 			{
-				_recognizer.AcceptWaveform(voiceResult, voiceResult.Length);
+				if(_recognizer.AcceptWaveform(voiceResult, voiceResult.Length)) {
+					var result = _recognizer.Result();
+					_threadedResultQueue.Enqueue(result);
+				}
 			}
 			else
 			{
@@ -302,7 +305,7 @@ public class VoskSpeechToText : MonoBehaviour
 			}
 			if (voiceProcessor.markStopRecording)
 			{
-				var result = _recognizer.FinalResult();
+				var result = _recognizer.Result();
 				_threadedResultQueue.Enqueue(result);
 				voiceProcessor.markStopRecording = false;
 			}
